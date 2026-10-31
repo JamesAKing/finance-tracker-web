@@ -12,15 +12,6 @@
     "fmt:check": "oxfmt --check",
     "prepare": "husky"
   },
-  "lint-staged": {
-    "*.{js, ts, jsx, tsx}": [
-      "oxfmt",
-      "oxlint"
-    ],
-    "*.json,css,md": [
-      "oxfmt"
-    ]
-  },
   "dependencies": {
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
@@ -38,5 +29,14 @@
     "oxlint-tsgolint": "^7.0.2005",
     "typescript": "~6.0.3",
     "vite": "^8.3.4"
+  },
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx}": [
+      "oxfmt",
+      "oxlint"
+    ],
+    "*.{json,css,md}": [
+      "oxfmt"
+    ]
   }
 }
