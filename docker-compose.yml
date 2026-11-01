@@ -1,0 +1,15 @@
+services:
+  finance-tracker-client:
+    build: .
+    image: finance-tracker-client
+    container_name: finance-tracker-client
+    environment:
+      API_UPSTREAM: http://finance-tracker-service:3000
+    ports:
+      - "5173:80"
+    networks:
+      - finance-tracker
+
+networks:
+  finance-tracker:
+    external: true
