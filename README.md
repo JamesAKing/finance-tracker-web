@@ -62,6 +62,23 @@ Stop `npm run dev` first: both use port 5173.
 - `location /` serves the built files, and falls back to `index.html` for any path that
   isn't a file, so client-side routes survive a page reload.
 
+## API client
+
+`src/api/generated/` is generated from the service's `openapi.yaml`, which is the source of
+truth for the API. Don't edit it by hand, and don't map the UI to its models directly: shape
+the UI around what users need, and map to and from the API models at the edge.
+
+To regenerate after the spec changes, from the service repo:
+
+```bash
+npm run generate:client -- ../client/src/api/generated
+```
+
+The folder is excluded from oxlint and oxfmt, and it is its own TypeScript project
+(`tsconfig.api.json`) without the strict unused-code and erasable-syntax checks that the
+rest of the client uses, because the generator's output doesn't follow them. Your own code
+keeps every check.
+
 ## Scripts
 
 | Script            | What it does                            |
