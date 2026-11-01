@@ -32,11 +32,11 @@
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx}": [
-      "oxfmt",
-      "oxlint"
+      "oxfmt --no-error-on-unmatched-pattern",
+      "oxlint --no-error-on-unmatched-pattern"
     ],
     "*.{json,css,md}": [
-      "oxfmt"
+      "oxfmt --no-error-on-unmatched-pattern"
     ]
   }
 }
