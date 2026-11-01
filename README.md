@@ -1,32 +1,73 @@
-# React + TypeScript + Vite
+# Finance Tracker Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React 19 + TypeScript client, built with Vite. The browser only ever talks to this origin
+(`http://localhost:5173`); requests to `/api` are forwarded to the service, so the session
+cookie stays first-party.
 
-Currently, two official plugins are available:
+## Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node 24+
+- The identity and service repos running (see their READMEs)
 
-## React Compiler
+## Run with Vite (day-to-day development)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Install dependencies:
 
-## Expanding the Oxlint configuration
+   ```bash
+   npm install
+   ```
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+2. Create your local env file:
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+   ```bash
+   cp .env.example .env
+   ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+   `SERVICE_PORT` is the port the service listens on (default `3000`).
+
+3. Start the dev server:
+
+   ```bash
+   npm run dev
+   ```
+
+Vite serves the app on `http://localhost:5173` and proxies `/api` to
+`http://localhost:${SERVICE_PORT}` (see `vite.config.ts`).
+
+## Run in Docker
+
+The image builds the app and serves the static files with nginx. nginx also does the job
+Vite's proxy does in development: it forwards `/api` to the service.
+
+1. Start identity, then the service in Docker (`docker compose --profile app up -d` in the
+   service repo). Identity creates the shared `finance-tracker` network the containers use
+   to reach each other.
+2. Build and start the client:
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. Open `http://localhost:5173`.
+
+Stop `npm run dev` first: both use port 5173.
+
+### How nginx is set up
+
+`nginx/default.conf.template` is the whole config. The official nginx image fills in
+`${API_UPSTREAM}` from the environment when the container starts.
+
+- `location /api/` forwards to `API_UPSTREAM` (`http://finance-tracker-service:3000`, set
+  in `docker-compose.yml`), passing on the original host and protocol.
+- `location /` serves the built files, and falls back to `index.html` for any path that
+  isn't a file, so client-side routes survive a page reload.
+
+## Scripts
+
+| Script            | What it does                            |
+| ----------------- | --------------------------------------- |
+| `npm run dev`     | Start Vite with hot reload on port 5173 |
+| `npm run build`   | Type check and build to `dist/`         |
+| `npm run preview` | Serve the built `dist/` locally         |
+| `npm run lint`    | Lint with oxlint                        |
+| `npm run fmt`     | Format with oxfmt                       |
