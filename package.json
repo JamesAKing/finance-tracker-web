@@ -13,9 +13,10 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.106.0",
+    "@tanstack/react-router": "^1.170.46",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "react-router": "^7.18.5"
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.4",

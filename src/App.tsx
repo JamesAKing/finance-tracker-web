@@ -1,18 +1,15 @@
-import { Route, Routes } from "react-router";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { RouterProvider } from "@tanstack/react-router";
 
 import "./App.css";
-import { RequireAuth } from "./auth/RequireAuth.tsx";
-import { LoginPage } from "./pages/LoginPage.tsx";
-import { ProfilePage } from "./pages/ProfilePage.tsx";
+import { queryClient } from "./api/client.ts";
+import { router } from "./router.tsx";
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route element={<RequireAuth />}>
-        <Route path="/" element={<ProfilePage />} />
-      </Route>
-    </Routes>
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} context={{ queryClient }} />
+    </QueryClientProvider>
   );
 }
 
