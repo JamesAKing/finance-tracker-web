@@ -21,8 +21,3 @@ export const currentUserQueryOptions = queryOptions({
   },
   retry: false,
 });
-
-export const csrfTokenQueryOptions = queryOptions({
-  queryKey: ["auth", "csrf"],
-  queryFn: async () => (await authApi.getCsrfToken()).csrfToken,
-});

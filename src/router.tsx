@@ -7,9 +7,9 @@ import {
   redirect,
 } from "@tanstack/react-router";
 
+import { authApi } from "./api/client.ts";
 import { currentUserQueryOptions } from "./auth/queries.ts";
-import { LoginPage } from "./pages/LoginPage.tsx";
-import { ProfilePage } from "./pages/ProfilePage.tsx";
+import { HomePage } from "./pages/HomePage.tsx";
 
 type RouterContext = {
   queryClient: QueryClient;
@@ -23,39 +23,30 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
   ),
 });
 
-const loginRoute = createRoute({
+const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/login",
+  path: "/",
+  // The service sends the browser back with ?login=failed when a login did not finish.
   validateSearch: (search: Record<string, unknown>): { login?: "failed" } =>
     search.login === "failed" ? { login: "failed" } : {},
-  beforeLoad: async ({ context }) => {
+  beforeLoad: async ({ context, search }) => {
     const user = await context.queryClient.ensureQueryData(currentUserQueryOptions);
-    if (user !== null) throw redirect({ to: "/" });
-  },
-  component: LoginPage,
-});
 
-// Every route under this one needs a signed-in user. Others get sent to /login.
-const authedRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  id: "_authed",
-  beforeLoad: async ({ context }) => {
-    const user = await context.queryClient.ensureQueryData(currentUserQueryOptions);
-    if (user === null) throw redirect({ to: "/login" });
+    // Nobody is signed in: send the browser to the service, which sends it to Keycloak. The
+    // Keycloak page also has the register and reset password links.
+    if (user === null && search.login !== "failed") {
+      throw redirect({ href: "/api/auth/login", reloadDocument: true });
+    }
+
     return { user };
   },
+  loader: async ({ context }) =>
+    context.user === null ? null : (await authApi.getCsrfToken()).csrfToken,
+  component: HomePage,
 });
-
-const profileRoute = createRoute({
-  getParentRoute: () => authedRoute,
-  path: "/",
-  component: ProfilePage,
-});
-
-const routeTree = rootRoute.addChildren([loginRoute, authedRoute.addChildren([profileRoute])]);
 
 export const router = createRouter({
-  routeTree,
+  routeTree: rootRoute.addChildren([homeRoute]),
   context: { queryClient: undefined! },
 });
 
