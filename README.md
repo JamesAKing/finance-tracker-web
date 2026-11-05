@@ -68,16 +68,42 @@ Stop `npm run dev` first: both use port 5173.
 truth for the API. Don't edit it by hand, and don't map the UI to its models directly: shape
 the UI around what users need, and map to and from the API models at the edge.
 
-To regenerate after the spec changes, from the service repo:
+To regenerate after the spec changes, from the service repo (needs Docker):
 
 ```bash
-npm run generate:client -- ../client/src/api/generated
+npm run generate:client -- ../finance-tracker-web/src/api/generated
 ```
 
 The folder is excluded from oxlint and oxfmt, and it is its own TypeScript project
 (`tsconfig.api.json`) without the strict unused-code and erasable-syntax checks that the
 rest of the client uses, because the generator's output doesn't follow them. Your own code
 keeps every check.
+
+### Calling the API
+
+Don't create API classes from `src/api/generated/` directly. Use the ones in `src/api/`:
+
+| File               | What it holds                                                                                |
+| ------------------ | -------------------------------------------------------------------------------------------- |
+| `configuration.ts` | Shared settings: base path `/api`, and same-origin credentials so the session cookie is sent |
+| `client.ts`        | `authApi` and `healthApi`, ready to use                                                      |
+| `query-client.ts`  | The one TanStack Query `QueryClient`, shared by React and the API layer                      |
+| `csrf.ts`          | `csrfQueryOptions`, `useCsrfToken()` and the CSRF middleware                                 |
+| `session.ts`       | `meQueryOptions`: the signed-in `User`, or `null` when there is no session (401)             |
+
+Server data lives in TanStack Query. Read it with `useQuery(meQueryOptions)` and similar,
+rather than copying it into React state.
+
+### CSRF
+
+The service rejects a `POST`, `PUT`, `PATCH` or `DELETE` without a CSRF token. The middleware
+in `csrf.ts` handles this for every call made through `client.ts`. It fetches the token from
+`/api/auth/csrf` once, caches it, and adds the `X-CSRF-Token` header. Feature code never
+handles the token.
+
+The token is cached for the life of the page. That's safe because signing in and out are
+full-page navigations, which start with an empty cache. `useCsrfToken()` is for the rare case
+that needs the token itself, such as the logout form.
 
 ## Tests
 

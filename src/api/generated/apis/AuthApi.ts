@@ -14,6 +14,11 @@
 
 import * as runtime from '../runtime';
 import {
+    type CsrfToken,
+    CsrfTokenFromJSON,
+    CsrfTokenToJSON,
+} from '../models/CsrfToken';
+import {
     type CurrentUser,
     CurrentUserFromJSON,
     CurrentUserToJSON,
@@ -55,10 +60,56 @@ export interface LoginCallbackRequest {
     errorUri?: string;
 }
 
+export interface LogoutRequest {
+    /**
+     * The CSRF token, when the form cannot send the X-CSRF-Token header. Not marked as required here, so a missing token gives 403, not 400
+     */
+    csrf?: string;
+}
+
 /**
  * 
  */
 export class AuthApi extends runtime.BaseAPI {
+
+    /**
+     * Creates request options for getCsrfToken without sending the request
+     */
+    async getCsrfTokenRequestOpts(): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+
+        let urlPath = `/auth/csrf`;
+
+        return {
+            path: urlPath,
+            method: 'GET',
+            headers: headerParameters,
+            query: queryParameters,
+        };
+    }
+
+    /**
+     * Call before any POST, PUT, PATCH or DELETE and send the token in the X-CSRF-Token header (or the _csrf form field for logout). Returns the existing token when the browser already has one, so open tabs share it. Sign-in and sign-out clear it, so fetch a new one after either.
+     * Get a CSRF token
+     */
+    async getCsrfTokenRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<CsrfToken>> {
+        const requestOptions = await this.getCsrfTokenRequestOpts();
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => CsrfTokenFromJSON(jsonValue));
+    }
+
+    /**
+     * Call before any POST, PUT, PATCH or DELETE and send the token in the X-CSRF-Token header (or the _csrf form field for logout). Returns the existing token when the browser already has one, so open tabs share it. Sign-in and sign-out clear it, so fetch a new one after either.
+     * Get a CSRF token
+     */
+    async getCsrfToken(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<CsrfToken> {
+        const response = await this.getCsrfTokenRaw(initOverrides);
+        return await response.value();
+    }
 
     /**
      * Creates request options for getCurrentUser without sending the request
@@ -201,6 +252,63 @@ export class AuthApi extends runtime.BaseAPI {
      */
     async loginCallback(requestParameters: LoginCallbackRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
         await this.loginCallbackRaw(requestParameters, initOverrides);
+    }
+
+    /**
+     * Creates request options for logout without sending the request
+     */
+    async logoutRequestOpts(requestParameters: LogoutRequest): Promise<runtime.RequestOpts> {
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        const consumes: runtime.Consume[] = [
+            { contentType: 'application/x-www-form-urlencoded' },
+        ];
+        // @ts-ignore: canConsumeForm may be unused
+        const canConsumeForm = runtime.canConsumeForm(consumes);
+
+        let formParams: { append(param: string, value: any): any };
+        let useForm = false;
+        if (useForm) {
+            formParams = new FormData();
+        } else {
+            formParams = new URLSearchParams();
+        }
+
+        if (requestParameters['csrf'] != null) {
+            formParams.append('_csrf', requestParameters['csrf'] as any);
+        }
+
+
+        let urlPath = `/auth/logout`;
+
+        return {
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: formParams,
+        };
+    }
+
+    /**
+     * Browser form post, not a fetch call. Ends the session if there is one and clears the session cookie. Always succeeds, with or without a session.
+     * Logs out the user
+     */
+    async logoutRaw(requestParameters: LogoutRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<void>> {
+        const requestOptions = await this.logoutRequestOpts(requestParameters);
+        const response = await this.request(requestOptions, initOverrides);
+
+        return new runtime.VoidApiResponse(response);
+    }
+
+    /**
+     * Browser form post, not a fetch call. Ends the session if there is one and clears the session cookie. Always succeeds, with or without a session.
+     * Logs out the user
+     */
+    async logout(requestParameters: LogoutRequest = {}, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
+        await this.logoutRaw(requestParameters, initOverrides);
     }
 
 }
