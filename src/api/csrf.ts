@@ -1,5 +1,4 @@
 import { queryOptions, useQuery } from "@tanstack/react-query";
-
 import { createConfiguration } from "./configuration.ts";
 import { AuthApi, type Middleware } from "./generated/index.ts";
 

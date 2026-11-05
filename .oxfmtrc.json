@@ -1,5 +1,7 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["src/api/generated"],
-  "sortImports": true
+  "ignorePatterns": ["src/api/generated", "src/routeTree.gen.ts"],
+  "sortImports": {
+    "newlinesBetween": false
+  }
 }

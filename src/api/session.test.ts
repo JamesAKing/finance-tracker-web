@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-
 import { AuthApi, Configuration } from "./generated/index.ts";
 import { fetchCurrentUser } from "./session.ts";
 

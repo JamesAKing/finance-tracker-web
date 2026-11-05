@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-
 import { createCsrfMiddleware } from "./csrf.ts";
 
 function runPre(method: string, getToken: () => Promise<string>) {

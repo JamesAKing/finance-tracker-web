@@ -105,12 +105,55 @@ The token is cached for the life of the page. That's safe because signing in and
 full-page navigations, which start with an empty cache. `useCsrfToken()` is for the rare case
 that needs the token itself, such as the logout form.
 
+## Auth flow
+
+The service and Keycloak handle all sign-in redirects. The browser never gets a token. It only
+has the service's `__Host-session` cookie, which JavaScript can't read.
+
+1. All pages except `/login-failed` are inside the `_authenticated` route. Before a page
+   loads, it gets the current user from `/api/auth/me` (`src/session/authenticate.ts`).
+2. If there is no session (401), the browser goes to `/api/auth/login`. This must be a page
+   navigation, not `fetch`, because the service redirects to the Keycloak login page.
+   Users register and reset passwords on that page.
+3. After login, Keycloak sends the browser to `/api/auth/callback`. The service sets the
+   session cookie and redirects to `/`.
+4. When signed in, `SessionProvider` gives the user to the pages below it. `useSession()`
+   returns `{ user }`, and `user` is never null.
+5. To log out, `LogoutButton` submits an HTML form to `/api/auth/logout` with the CSRF token
+   in the `_csrf` field. It is a form, not `fetch`, because the service redirects through
+   Keycloak's logout and back to the app.
+
+### Errors
+
+| Case                                          | What the user sees                                                         |
+| --------------------------------------------- | -------------------------------------------------------------------------- |
+| Login failed (service sends `/?login=failed`) | `/login-failed` with a "Try again" link. No automatic redirect, so no loop |
+| `/api/auth/me` fails in another way           | "Something went wrong" with a "Try again" button                           |
+| Unknown path                                  | "Page not found"                                                           |
+
+## Routes
+
+Each route is a file in `src/routes/` (TanStack Router, file-based routing). The Vite plugin
+creates `src/routeTree.gen.ts` from these files when you run `npm run dev` or
+`npm run build`. Commit this file, but don't edit it. oxlint and oxfmt skip it.
+
+- `__root.tsx`: wraps all pages. Shows "Page not found" for unknown paths.
+- `_authenticated.tsx`: checks that the user is signed in. The `_` prefix means it has no URL
+  path, so it protects all routes in `_authenticated/`.
+- `_authenticated/index.tsx`: the `/` page.
+- `login-failed.tsx`: the `/login-failed` page. This is the only public page.
+
+To add a protected page, add a file to `src/routes/_authenticated/`.
+
+The `react/only-export-components` lint rule is off for `src/routes/`. Route files must
+export a `Route` object as well as components. The router plugin moves the components into
+separate modules, so fast refresh still works.
+
 ## Tests
 
 Tests use [Vitest](https://vitest.dev), configured in the `test` block of `vite.config.ts`, so
 they share the app's Vite setup. Put a test next to the code it covers, named `*.test.ts` or
-`*.test.tsx`. Tests run in plain Node for now. Switch `environment` to `jsdom` when the first
-component test needs a DOM.
+`*.test.tsx`. Tests run in jsdom, so components can be rendered with React Testing Library.
 
 CI (`.github/workflows/ci.yml`) runs lint, format check, type check and build, and the tests on
 every pull request and on pushes to `master`.
