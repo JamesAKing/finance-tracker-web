@@ -79,12 +79,24 @@ The folder is excluded from oxlint and oxfmt, and it is its own TypeScript proje
 rest of the client uses, because the generator's output doesn't follow them. Your own code
 keeps every check.
 
+## Tests
+
+Tests use [Vitest](https://vitest.dev), configured in the `test` block of `vite.config.ts`, so
+they share the app's Vite setup. Put a test next to the code it covers, named `*.test.ts` or
+`*.test.tsx`. Tests run in plain Node for now. Switch `environment` to `jsdom` when the first
+component test needs a DOM.
+
+CI (`.github/workflows/ci.yml`) runs lint, format check, type check and build, and the tests on
+every pull request and on pushes to `master`.
+
 ## Scripts
 
-| Script            | What it does                            |
-| ----------------- | --------------------------------------- |
-| `npm run dev`     | Start Vite with hot reload on port 5173 |
-| `npm run build`   | Type check and build to `dist/`         |
-| `npm run preview` | Serve the built `dist/` locally         |
-| `npm run lint`    | Lint with oxlint                        |
-| `npm run fmt`     | Format with oxfmt                       |
+| Script               | What it does                            |
+| -------------------- | --------------------------------------- |
+| `npm run dev`        | Start Vite with hot reload on port 5173 |
+| `npm run build`      | Type check and build to `dist/`         |
+| `npm run preview`    | Serve the built `dist/` locally         |
+| `npm test`           | Run the tests once                      |
+| `npm run test:watch` | Run the tests, re-running on change     |
+| `npm run lint`       | Lint with oxlint                        |
+| `npm run fmt`        | Format with oxfmt                       |

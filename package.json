@@ -8,6 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "prepare": "husky"
@@ -24,11 +26,13 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
     "oxfmt": "^0.74.0",
     "oxlint": "^1.88.0",
     "oxlint-tsgolint": "^7.0.2005",
     "typescript": "~6.0.3",
-    "vite": "^8.3.4"
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx}": [
