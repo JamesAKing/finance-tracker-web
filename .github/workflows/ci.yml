@@ -9,7 +9,6 @@ jobs:
   check:
     runs-on: ubuntu-latest
     env:
-      # Skip installing Git hooks on the CI machine
       HUSKY: "0"
     steps:
       - uses: actions/checkout@v7
@@ -22,6 +21,5 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run fmt:check
-      # Type checks every project (tsc -b) before bundling
       - run: npm run build
       - run: npm test
