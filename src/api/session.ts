@@ -1,5 +1,4 @@
 import { queryOptions } from "@tanstack/react-query";
-
 import { authApi } from "./client.ts";
 import { type AuthApi, type CurrentUser, ResponseError } from "./generated/index.ts";
 
