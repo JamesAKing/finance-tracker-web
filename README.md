@@ -54,13 +54,50 @@ Stop `npm run dev` first: both use port 5173.
 
 ### How nginx is set up
 
-`nginx/default.conf.template` is the whole config. The official nginx image fills in
-`${API_UPSTREAM}` from the environment when the container starts.
+The image uses `nginxinc/nginx-unprivileged`, so nginx runs as user 101, not root. It listens on
+port 8080, because a non-root user can't use port 80. `docker-compose.yml` maps it to 5173.
 
-- `location /api/` forwards to `API_UPSTREAM` (`http://finance-tracker-service:3000`, set
-  in `docker-compose.yml`), passing on the original host and protocol.
-- `location /` serves the built files, and falls back to `index.html` for any path that
-  isn't a file, so client-side routes survive a page reload.
+`nginx/default.conf.template` is the main config. The nginx image fills in `${API_UPSTREAM}`
+from the environment when the container starts.
+
+- `location = /healthz` returns `ok`. The Dockerfile's `HEALTHCHECK` calls it every 10 seconds.
+- `location /api/` forwards to `API_UPSTREAM` (`http://finance-tracker-service:3000`, set in
+  `docker-compose.yml`), passing on the original host and protocol. The service sets its own
+  security headers on these responses.
+- `location /assets/` serves the built JS and CSS. Their file names change when their content
+  changes, so browsers can cache them for a year (`immutable`).
+- `location /` serves everything else, and falls back to `index.html` for any path that isn't a
+  file, so client-side routes survive a page reload. `Cache-Control: no-cache` makes browsers
+  check for a new `index.html` every time, so users get a new release straight away.
+
+`nginx/security-headers.conf` holds the security headers. It is included in `/assets/` and `/`:
+
+| Header                    | What it does                                                     |
+| ------------------------- | ---------------------------------------------------------------- |
+| `Content-Security-Policy` | Only allows scripts, styles, images and API calls from this site |
+| `X-Content-Type-Options`  | Stops the browser guessing file types                            |
+| `X-Frame-Options`         | Stops other sites showing the app in a frame (older browsers)    |
+| `Referrer-Policy`         | Sends only the site name, not the full URL, to other sites       |
+| `Permissions-Policy`      | Turns off camera, microphone, location and payment features      |
+
+`Strict-Transport-Security` (HTTPS only) is not set here. The HTTPS proxy in front of the app
+will set it.
+
+If you load something from another site later (fonts, analytics, images), add that site to
+`Content-Security-Policy`, or the browser will block it.
+
+## Container image
+
+CI builds the image on every PR and scans it with Trivy. It fails on high or critical
+vulnerabilities that have a fix. On every merge to `master`, it pushes the image to GHCR for
+amd64 and arm64, as `ghcr.io/jamesaking/finance-tracker-web:<commit SHA>`. There is no
+`latest` tag.
+
+The image upgrades its OS packages at build time and removes `curl`, which nothing uses.
+
+CI also lints the Dockerfile with hadolint and runs `npm audit` on production dependencies.
+All GitHub Actions are pinned to a commit SHA. Dependabot (`.github/dependabot.yml`) opens
+weekly PRs to update npm packages, base images and actions.
 
 ## API client
 

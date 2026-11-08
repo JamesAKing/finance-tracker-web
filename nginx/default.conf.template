@@ -1,6 +1,13 @@
 server {
-    listen 80;
+    listen 8080;
     root /usr/share/nginx/html;
+    server_tokens off;
+
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
 
     location /api/ {
         proxy_pass ${API_UPSTREAM};
@@ -9,7 +16,15 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
+    location /assets/ {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        try_files $uri =404;
+    }
+
     location / {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "no-cache" always;
         try_files $uri $uri/ /index.html;
     }
 }
