@@ -5,3 +5,6 @@ dist
 .git
 .husky
 *.log
+.github
+docs
+coverage
