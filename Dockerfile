@@ -5,7 +5,7 @@ RUN npm ci --ignore-scripts
 COPY . .
 RUN npm run build
 
-FROM nginxinc/nginx-unprivileged:1.30.6-alpine3.24
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine3.24
 USER 0:0
 RUN apk upgrade --no-cache && apk del --no-cache curl
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
