@@ -27,6 +27,7 @@ jobs:
           load: true
           tags: ghcr.io/jamesaking/finance-tracker-web:scan
           cache-from: type=gha,scope=web
+          no-cache-filters: runtime
           cache-to: type=gha,mode=max,scope=web
 
       - name: Scan for vulnerabilities
@@ -58,3 +59,4 @@ jobs:
           tags: ghcr.io/jamesaking/finance-tracker-web:${{ github.sha }}
           labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
           cache-from: type=gha,scope=web
+          no-cache-filters: runtime
